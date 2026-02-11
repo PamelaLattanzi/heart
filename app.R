@@ -1,7 +1,7 @@
 library(shiny)
 library(bslib) # For theming with Bootstrap
 library(DT) #For rendering data table
-library(ggplot2)
+library(ggplot2) #For static plotting
 
 heart <- readRDS("data/heart.rds")
 
@@ -99,6 +99,19 @@ server <- function(input, output, session) {
   output$m_mortality <- renderText({
     d <- filtered_data()[filtered_data()$SEX == "Male", ]
     paste0(round(100 * sum(d$DIED == "Died") / nrow(d), 1), "%")
+  })
+  
+  output$age_hist <- renderPlot({
+    req(nrow(filtered_data()) >= 2) #condition to be satisfied
+    ggplot(filtered_data(), aes(x = AGE, fill = DIED)) +
+      geom_density(alpha = 0.5) +
+      labs(x = "Age", y = "Density", fill = "DIED") +
+      facet_wrap(~ SEX) +
+      theme_minimal() +
+      theme(
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14)
+      )
   })
   
 }
