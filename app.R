@@ -4,6 +4,8 @@ library(DT) #For rendering data table
 library(ggplot2) #For static plotting
 library(plotly)
 
+source("R/helpers.R")
+
 heart <- readRDS("data/heart.rds")
 
 ui <- page_sidebar(
@@ -103,14 +105,12 @@ server <- function(input, output, session) {
   
   # Female stats
   output$f_mortality <- renderText({
-    d <- filtered_data()[filtered_data()$SEX == "Female", ]
-    paste0(round(100 * sum(d$DIED == "Died") / nrow(d), 1), "%")
+    d <- compute_mortality(filtered_data()[filtered_data()$SEX == "Female", ])
   })
   
   # Male stats
   output$m_mortality <- renderText({
-    d <- filtered_data()[filtered_data()$SEX == "Male", ]
-    paste0(round(100 * sum(d$DIED == "Died") / nrow(d), 1), "%")
+    d <- compute_mortality(filtered_data()[filtered_data()$SEX == "Male", ])
   })
   
   output$age_hist <- renderPlot({
