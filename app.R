@@ -2,6 +2,7 @@ library(shiny)
 library(bslib) # For theming with Bootstrap
 library(DT) #For rendering data table
 library(ggplot2) #For static plotting
+library(plotly)
 
 heart <- readRDS("data/heart.rds")
 
@@ -60,7 +61,10 @@ ui <- page_sidebar(
         plotOutput("age_hist")
       )
     ),
-    nav_panel("Explore", "Explore content coming soon..."),
+    nav_panel(
+      "Explore", 
+      plotlyOutput("scatter_plot")
+      ),
     nav_panel(
       "Data", 
       DT::dataTableOutput("data_table")
@@ -113,6 +117,21 @@ server <- function(input, output, session) {
         axis.text = element_text(size = 14)
       )
   })
+  
+  output$scatter_plot <- renderPlotly({
+    df <- filtered_data()
+    req(nrow(df) >= 1)
+    if(nrow(df) > 1000) {
+      df <- df[sample(nrow(df), 1000), ] # just a sample to make the plotting faster
+    }
+    p <- ggplot(df, aes(x = AGE, y = LOS, color = SEX)) +
+      geom_point(alpha = 0.3) +
+      labs(x = "Age", y = "Length of Stay (days)", color = "Sex") +
+      geom_smooth(method = "lm", se = FALSE) +
+      theme_minimal()
+    ggplotly(p)
+  })
+  
   
 }
 
