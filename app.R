@@ -115,8 +115,9 @@ server <- function(input, output, session) {
     d <- compute_mortality(filtered_data()[filtered_data()$SEX == "Male", ])
   })
   
-  output$age_hist <- renderPlot({
-    req(nrow(filtered_data()) >= 2) #condition to be satisfied
+  # Create the age plot as a reactive (reusable)
+  age_plot <- reactive({
+    req(nrow(filtered_data()) >= 2)
     ggplot(filtered_data(), aes(x = AGE, fill = DIED)) +
       geom_density(alpha = 0.5) +
       labs(x = "Age", y = "Density", fill = "DIED") +
@@ -126,6 +127,11 @@ server <- function(input, output, session) {
         axis.title = element_text(size = 16),
         axis.text = element_text(size = 14)
       )
+  })
+  
+  # Display the plot
+  output$age_hist <- renderPlot({
+    age_plot()
   })
   
   output$scatter_plot <- renderPlotly({
