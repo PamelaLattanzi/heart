@@ -102,7 +102,6 @@ ui <- page_sidebar(
         )
       )
     ),
-    
     nav_panel(
       "Data", 
       DT::dataTableOutput("data_table")
@@ -183,6 +182,41 @@ server <- function(input, output, session) {
     updateSelectInput(session, "drg", selected = "All")
     updateSliderInput(session, "age_range",
                       value = c(min(heart$AGE), max(heart$AGE)))
+  })
+  
+  format_money <- function(x) {
+    if (is.na(x) || is.nan(x) || is.infinite(x)) return("—")
+    paste0("$", formatC(x, format = "f", digits = 0, big.mark = ","))
+  }
+  
+  format_num <- function(x, digits = 1) {
+    if (is.na(x) || is.nan(x) || is.infinite(x)) return("—")
+    formatC(x, format = "f", digits = digits, big.mark = ",")
+  }
+  
+  # Avg Charges (ignore missing charges)
+  output$avg_charges <- renderText({
+    df <- filtered_data()
+    x <- mean(df$CHARGES, na.rm = TRUE)
+    format_money(x)
+  })
+  
+  # Avg LOS
+  output$avg_los <- renderText({
+    df <- filtered_data()
+    x <- mean(df$LOS, na.rm = TRUE)
+    paste0(format_num(x, digits = 1), " days")
+  })
+  
+  # Avg Cost per Day: sum(CHARGES) / sum(LOS) using LOS > 0 and non-missing charges
+  output$cost_per_day <- renderText({
+    df <- filtered_data()
+    df <- df[!is.na(df$CHARGES) & df$LOS > 0, ]
+    
+    if (nrow(df) < 1) return("—")
+    
+    x <- sum(df$CHARGES) / sum(df$LOS)
+    format_money(x)
   })
   
 }
