@@ -71,6 +71,10 @@ ui <- page_sidebar(
         card_header("Age Distribution"),
         plotOutput("age_hist"),
         mod_download_plot_ui("dl_age", label = "Download")
+      ),
+      card(
+        card_header("Summary by Sex"),
+        DT::dataTableOutput("sex_summary")
       )
     ),
     nav_panel(
@@ -180,6 +184,47 @@ server <- function(input, output, session) {
   output$data_table <- DT::renderDataTable({
     filtered_data()
   })
+
+  output$sex_summary <- DT::renderDataTable({
+    df <- filtered_data()
+    req(nrow(df) > 0)
+    
+    summary_tbl <- aggregate(
+      cbind(AGE, LOS, CHARGES) ~ SEX,
+      data = df,
+      FUN = function(x) mean(x, na.rm = TRUE)
+    )
+    
+    deaths <- aggregate(DIED ~ SEX, data = df, FUN = function(x) mean(x == "Died", na.rm = TRUE))
+    counts <- aggregate(ID ~ SEX, data = df, FUN = length)
+    
+    summary_tbl <- merge(summary_tbl, deaths, by = "SEX")
+    summary_tbl <- merge(summary_tbl, counts, by = "SEX")
+    
+    names(summary_tbl) <- c(
+      "Sex",
+      "Avg Age",
+      "Avg LOS",
+      "Avg Charges",
+      "Mortality Rate",
+      "Patients"
+    )
+    
+    summary_tbl$`Avg Age` <- format_num(summary_tbl$`Avg Age`, digits = 1)
+    summary_tbl$`Avg LOS` <- paste0(format_num(summary_tbl$`Avg LOS`, digits = 1), " days")
+    summary_tbl$`Avg Charges` <- format_money(summary_tbl$`Avg Charges`)
+    summary_tbl$`Mortality Rate` <- paste0(format_num(summary_tbl$`Mortality Rate` * 100, digits = 1), "%")
+    
+    DT::datatable(
+      summary_tbl,
+      rownames = FALSE,
+      options = list(
+        dom = "t",
+        ordering = FALSE,
+        pageLength = 5
+      )
+    )
+  })
   
   output$download_data <- downloadHandler(
     filename = function() {
@@ -282,13 +327,17 @@ server <- function(input, output, session) {
   })
   
   format_money <- function(x) {
-    if (is.na(x) || is.nan(x) || is.infinite(x)) return("—")
-    paste0("$", formatC(x, format = "f", digits = 0, big.mark = ","))
+    bad <- is.na(x) | is.nan(x) | is.infinite(x)
+    out <- paste0("$", formatC(x, format = "f", digits = 0, big.mark = ","))
+    out[bad] <- "—"
+    out
   }
   
   format_num <- function(x, digits = 1) {
-    if (is.na(x) || is.nan(x) || is.infinite(x)) return("—")
-    formatC(x, format = "f", digits = digits, big.mark = ",")
+    bad <- is.na(x) | is.nan(x) | is.infinite(x)
+    out <- formatC(x, format = "f", digits = digits, big.mark = ",")
+    out[bad] <- "—"
+    out
   }
   
   # Avg Charges (ignore missing charges)
