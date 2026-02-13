@@ -104,7 +104,7 @@ ui <- page_sidebar(
       
       card(
         card_header("Daily Charges (Cost per Day)"),
-        plotOutput("charges_boxplot", height = "420px")
+        plotlyOutput("charges_boxplot", height = "420px")
       )
     ),
     
@@ -246,11 +246,15 @@ server <- function(input, output, session) {
     df
   })
   
-  output$charges_boxplot <- renderPlot({
+  output$charges_boxplot <- renderPlotly({
     df <- charges_plot_data()
     req(nrow(df) >= 1)
     
-    ggplot(df, aes(x = SEX, y = COST_PER_DAY)) +
+    p <- ggplot(df, aes(x = SEX, y = COST_PER_DAY, fill = SEX, text = paste0(
+      "Sex: ", SEX,
+      "<br>DRG: ", DRG,
+      "<br>Cost/Day: $", formatC(COST_PER_DAY, format = "f", digits = 0, big.mark = ",")
+    ))) +
       geom_boxplot(na.rm = TRUE) +
       facet_wrap(~ DRG) +
       labs(
@@ -263,8 +267,11 @@ server <- function(input, output, session) {
         axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
         strip.text = element_text(size = 12),
-        plot.title = element_text(size = 14, face = "bold")
+        plot.title = element_text(size = 14, face = "bold"),
+        legend.position = "none"
       )
+    
+    ggplotly(p, tooltip = "text")
   })
   
 }
