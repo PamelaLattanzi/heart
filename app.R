@@ -140,6 +140,22 @@ ui <- page_sidebar(
         downloadButton("download_data", "Download CSV"),
         DT::dataTableOutput("data_table")
       )
+    ),
+    
+    nav_panel(
+      "About",
+      card(
+        card_header("About This Dashboard"),
+        p("This dashboard explores outcomes and costs for 12,844 heart attack patients from New York State (1993). It lets you filter by outcome, diagnosis, DRG, and age to view distributions, trends, and costs."),
+        p("Research suggests higher female mortality after heart attack is multifactorial, driven by a combination of:"),
+        tags$ul(
+          tags$li("Older age and higher comorbidity burden at presentation."),
+          tags$li("More non-classic symptoms, leading to delays in recognition and treatment."),
+          tags$li("Higher prevalence of non-obstructive disease (e.g., MINOCA and microvascular dysfunction), which can complicate diagnosis."),
+          tags$li("Treatment gaps or lower use of guideline therapies in some settings."),
+          tags$li("Psychosocial and socioeconomic factors that affect recovery and adherence.")
+        )
+      )
     )
   )
 )
