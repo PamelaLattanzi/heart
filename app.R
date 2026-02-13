@@ -128,7 +128,8 @@ ui <- page_sidebar(
       
       card(
         card_header("Daily Charges (Cost per Day)"),
-        plotlyOutput("charges_boxplot", height = "420px")
+        plotlyOutput("charges_boxplot", height = "420px"),
+        mod_download_plot_ui("dl_charges", label = "Download")
       )
     ),
     
@@ -320,11 +321,11 @@ server <- function(input, output, session) {
     df
   })
   
-  output$charges_boxplot <- renderPlotly({
+  charges_plot <- reactive({
     df <- charges_plot_data()
     req(nrow(df) >= 1)
     
-    p <- ggplot(df, aes(x = SEX, y = COST_PER_DAY, fill = SEX, text = paste0(
+    ggplot(df, aes(x = SEX, y = COST_PER_DAY, fill = SEX, text = paste0(
       "Sex: ", SEX,
       "<br>DRG: ", DRG,
       "<br>Cost/Day: $", formatC(COST_PER_DAY, format = "f", digits = 0, big.mark = ",")
@@ -344,9 +345,13 @@ server <- function(input, output, session) {
         plot.title = element_text(size = 14, face = "bold"),
         legend.position = "none"
       )
-    
-    ggplotly(p, tooltip = "text")
   })
+  
+  output$charges_boxplot <- renderPlotly({
+    ggplotly(charges_plot(), tooltip = "text")
+  })
+  
+  mod_download_plot_server("dl_charges", filename = "daily_charges", figure = charges_plot)
   
 }
 
