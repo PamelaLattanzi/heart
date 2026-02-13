@@ -100,8 +100,14 @@ ui <- page_sidebar(
           theme = "warning",
           showcase = bsicons::bs_icon("receipt")
         )
+      ),
+      
+      card(
+        card_header("Daily Charges (Cost per Day)"),
+        plotOutput("charges_boxplot", height = "420px")
       )
     ),
+    
     nav_panel(
       "Data", 
       DT::dataTableOutput("data_table")
