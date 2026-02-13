@@ -225,6 +225,48 @@ server <- function(input, output, session) {
     format_money(x)
   })
   
+  # Row-level dataset for Charges boxplot: compute cost per day, filter invalid rows
+  charges_plot_data <- reactive({
+    df <- filtered_data()
+    
+    # Need columns present
+    req(!is.null(df$CHARGES), !is.null(df$LOS), !is.null(df$SEX), !is.null(df$DRG))
+    
+    # Keep only rows with non-missing charges and LOS > 0
+    df <- df[!is.na(df$CHARGES) & !is.na(df$LOS) & df$LOS > 0, ]
+    req(nrow(df) >= 1)
+    
+    # Compute cost per day per stay
+    df$COST_PER_DAY <- df$CHARGES / df$LOS
+    
+    # Optional: drop non-finite values (in case of weird data)
+    df <- df[is.finite(df$COST_PER_DAY), ]
+    req(nrow(df) >= 1)
+    
+    df
+  })
+  
+  output$charges_boxplot <- renderPlot({
+    df <- charges_plot_data()
+    req(nrow(df) >= 1)
+    
+    ggplot(df, aes(x = SEX, y = COST_PER_DAY)) +
+      geom_boxplot(na.rm = TRUE) +
+      facet_wrap(~ DRG) +
+      labs(
+        x = "Sex",
+        y = "Charges per Day",
+        title = "Daily Charges by Sex, Faceted by DRG"
+      ) +
+      theme_minimal() +
+      theme(
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        strip.text = element_text(size = 12),
+        plot.title = element_text(size = 14, face = "bold")
+      )
+  })
+  
 }
 
 shinyApp(ui = ui, server = server)
