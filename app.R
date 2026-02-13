@@ -77,6 +77,32 @@ ui <- page_sidebar(
       "Explore", 
       plotlyOutput("scatter_plot")
       ),
+    
+    nav_panel(
+      "Charges",
+      layout_column_wrap(
+        width = 1/3,
+        value_box(
+          title = "Avg Charges (per stay)",
+          value = textOutput("avg_charges"),
+          theme = "success",
+          showcase = bsicons::bs_icon("currency-dollar")
+        ),
+        value_box(
+          title = "Avg Length of Stay",
+          value = textOutput("avg_los"),
+          theme = "primary",
+          showcase = bsicons::bs_icon("clock")
+        ),
+        value_box(
+          title = "Avg Cost per Day",
+          value = textOutput("cost_per_day"),
+          theme = "warning",
+          showcase = bsicons::bs_icon("receipt")
+        )
+      )
+    ),
+    
     nav_panel(
       "Data", 
       DT::dataTableOutput("data_table")
