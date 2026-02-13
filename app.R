@@ -110,8 +110,12 @@ ui <- page_sidebar(
     
     nav_panel(
       "Data", 
-      DT::dataTableOutput("data_table")
+      card(
+        card_header("Filtered Dataset"),
+        downloadButton("download_data", "Download CSV"),
+        DT::dataTableOutput("data_table")
       )
+    )
   )
 )
 
@@ -135,6 +139,17 @@ server <- function(input, output, session) {
   output$data_table <- DT::renderDataTable({
     filtered_data()
   })
+  
+  output$download_data <- downloadHandler(
+    filename = function() {
+      paste0("heart_filtered_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      df <- filtered_data()
+      req(nrow(df) > 0)  # ensures there is data
+      write.csv(df, file, row.names = FALSE, na = "")
+    }
+  )
   
   # Female stats
   output$f_mortality <- renderText({
